@@ -1,0 +1,3 @@
+[debug] foo at t/01basic.t line 33
+[info] foo at t/01basic.t line 34
+[err] Gah! at t/01basic.t line 35
