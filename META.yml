@@ -18,4 +18,4 @@ no_index:
 requires: 
   Log::Dispatch::Configurator: 0
   Moose: 0
-version: 1.0000
+version: 1.0001

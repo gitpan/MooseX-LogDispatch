@@ -1,6 +1,9 @@
 Revision history for MooseX-LogDispatch
 
-1.0000  ??
+1.0001 Wed Nov 14 2007
+       Fix dist to include inc/Module/Install.pm et al.
+
+1.0000 Sat Nov 10 2007
        Docs, tests and tiding up for release 
 
 0.0.1  Tue Jun 26 17:10:55 2007
