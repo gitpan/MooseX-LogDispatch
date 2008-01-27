@@ -1,8 +1,10 @@
 package MooseX::LogDispatch;
 
-our $VERSION = '1.0001';
+our $VERSION = '1.1000';
 
-use Moose qw(confess);
+use Moose::Role;
+use Log::Dispatch::Config;
+use MooseX::LogDispatch::ConfigMaker;
 
 sub import {
     my $pkg = caller();
@@ -15,25 +17,23 @@ sub import {
     $pkg->meta->alias_method(
         'Logger' => sub {
             my %params = @_;
-            my $config = 'MooseX::LogDispatch::Configurator::';
-            $config .=
-              exists $params{'config'}
-              ? ucfirst( $params{'config'} )
-              : 'Hardwired';
-
-            my @roles = ($config);
+            Carp::carp("with Logger() snytax is deprecated and will be removed in a future release. See MooseX::LogDispatch POD for details")
+              unless $ENV{MX_LOGDISPATCH_NO_DEPRECATION};
 
             # This is a hack, it should really create an anonymous Role
             # that has exactly the Logger attribute we need, but
             # it's 2am and I'm not ready to figure that out yet
             # -- perigrin
 
-            my $interface = 'MooseX::LogDispatch::Role::';
+            my $interface = 'MooseX::LogDispatch';
             $interface .=
               exists $params{'interface'}
-              ? ucfirst( $params{'interface'} )
-              : 'Default';
-            push @roles, $interface;
+              ? '::' . ucfirst( $params{'interface'} )
+              : '';
+
+            my @roles = $interface;
+
+            push @roles, 'MooseX::LogDispatch::Compat::FileBased' if ( ($params{config} || '') eq 'FileBased' );
 
             Class::MOP::load_class($_)
               || die "Could not load role (" . $_ . ") for package ($pkg)"
@@ -45,6 +45,50 @@ sub import {
 
 }
 
+use Moose::Util::TypeConstraints;
+
+my $ldc_type = subtype 'LogDispatchConfigurator' => as 'Object' => where { $_->isa('Log::Dispatch::Configurator') };
+
+coerce 'LogDispatchConfigurator'
+  => from 'Str' => via { 
+    require Log::Dispatch::Configurator::AppConfig;
+    Log::Dispatch::Configurator::AppConfig->new($_)
+  }
+  => from 'HashRef' => via { return MooseX::LogDispatch::ConfigMaker->new($_) };
+
+
+has logger => (
+    isa      => 'Log::Dispatch::Config',
+    is       => 'rw',
+    lazy_build => 1,
+);
+
+sub _build_logger {
+    my $self = shift;
+    Log::Dispatch::Config->configure( $self->_build_configurator );
+    return Log::Dispatch::Config->instance;
+}
+
+sub _build_configurator {
+    my $self = shift;
+    my $meta = $self->meta;
+
+    my $conf_method =
+      $self->can('log_dispatch_conf') ||
+      $self->can('config_filename');
+
+    return $ldc_type->coercion->coerce($self->$conf_method)
+      if $conf_method;
+
+    return MooseX::LogDispatch::ConfigMaker->new({
+      class     => 'Log::Dispatch::Screen',
+      min_level => 'debug',
+      stderr    => 1,
+      format    => '[%p] %m at %F line %L%n',
+    });
+}
+
+
 1;
 __END__
 
@@ -54,53 +98,75 @@ MooseX::LogDispatch - A Logging Role for Moose
 
 =head1 VERSION
 
-This document describes MooseX::LogDispatch version 1.0000
+This document describes MooseX::LogDispatch version 1.1000
 
 =head1 SYNOPSIS
 
-    package MyApp;
-    use Moose;
-    use MooseX::LogDispatch;
+ package MyApp;
+ use Moose;
+ with MooseX::LogDispatch;
+ # or
+ # with MooseX::LogDispatch::Levels
     
-    with Logger();
+ # This is optional. Will log to screen if not provided
+ has log_dispatch_conf => (
+   is => 'ro',
+   lazy => 1,
+   default => sub {
+     my $self = shift;
+     My::Configurator->new( # <- you write this class!
+         file => $self->log_file,
+         debug => $self->debug,
+     );
+          
+   }
+ );
 
-    sub foo { 
-        my ($self) = @_;
-        $self->logger->debug("started foo");
-        ....
-        $self->logger->debug('ending foo');
-    }
+ # This is the same as the old FileBased config parameter to the role. If you
+ # prefer you could name the attribute 'config_filename' instead.
+ has log_dispatch_conf => (
+   is => 'ro',
+   lazy => 1,
+   default => "/path/to/my/logger.conf"
+ );
+
+ # Here's another variant, using a Log::Dispatch::Configurator-style 
+ #  hashref to configure things without an explicit subclass
+ has log_dispatch_conf => (
+   is => 'ro',
+   isa => 'HashRef',
+   lazy => 1,
+   required => 1,
+   default => sub {
+     my $self = shift;
+     return $self->debug ?
+        {
+          class     => 'Log::Dispatch::Screen',
+          min_level => 'debug',
+          stderr    => 1,
+          format    => '[%p] %m at %F line %L%n',
+        }
+        : {
+            class     => 'Log::Dispatch::Syslog',
+            min_level => 'info',
+            facility  => 'daemon',
+            ident     => $self->daemon_name,
+            format    => '[%p] %m',
+        };
+    },
+ );
+
+
+ sub foo { 
+   my ($self) = @_;
+   $self->logger->debug("started foo");
+   ....
+   $self->logger->debug('ending foo');
+ }
   
 =head1 DESCRIPTION
 
 L<Log::Dispatch> role for use with your L<Moose> classes.
-
-=head1 EXPORTS
-
-=head2 Logger(%options)
-
-This module will export the C<Logger> method which can be used to load a
-specific set of MooseX::Logdispatch roles to implement a specific combination
-of features.  It is meant to make things easier, but it is by no means the only
-way. You can still compose your roles by hand if you like.
-
-The following options are understood
-
-=over
-
-=item B<config>
-
-A suffix of the role you wish to use to configure the Logger. 
-C<MooseX::LogDispatch::Configurator::> is prepended to this value.
-
-Two roles are included in the dist - see L</LOGGER ROLES>
-
-=item B<interface>
-
-Similar to C<config>, but this controls the interfaces presented. See
-L</INTERFACE ROLES> for details
-
-=back
 
 =head1 ACCESSORS
 
@@ -109,70 +175,43 @@ L</INTERFACE ROLES> for details
 This is the main L<Log::Dispatch::Config> object that does all the work. It 
 has methods for each of the log levels, such as C<debug> or C<error>.
 
-=head1 LOGGER ROLES
+=head2 log_dispatch_conf
 
-There are different ways of configuring a Log::Dispatch object. This 
-distribution includes two roles:
+This is an optional attribute you can give to your class.  If you
+define it as a hashref value, that will be interpreted in the style
+of the configuration hashrefs documented in L<Log::Dispatch::Config>
+documents when they show examples of using 
+L<Log::Dispatch::Configurator/PLUGGABLE CONFIGURATOR> for pluggable 
+configuration.
 
-=over
+You can also gain greater flexibility by defining your own complete
+L<Log::Dispatch::Configurator> subclass and having your C<log_dispatch_config>
+attribute be an instance of this class.
 
-=item *
+If this attribute has a value of a string, it will be taken to by the path
+to a config file for L<Log::Dispatch::Configurator::AppConfig>.
 
-L<Hardwired|MooseX::LogDispatch::Configurator::Hardwired> - hard-wired 
-semi-sane defaults that logs everything to the screen. Enough to get you going,
-but you will probably not want to use this in the long run.
+By lazy-loading either one (C<lazy => 1>), you can have the configuration
+determined at runtime.  This is nice if you want to change your log
+format and/or destination at runtime based on things like
+L<MooseX::Getopt> / L<MooseX::Daemonize> parameters.
 
-=item * 
+If you don't provide this attribute, we'll default to sending everything to
+the screen in a reasonable debugging format.
 
-L<FileBased|MooseX::LogDispatch::Configurator::FileBased> - Load config from a
-file using L<Log::Dispatch::Configurator::AppConfig>
+=head1 SEE ALSO
 
-The config file is specified by using the C<config_filename> attribute:
+L<MooseX::LogDispatch::Levels>, L<Log::Dispatch::Configurator>,
+L<Log::Dispatch::Config>, L<Log::Dispatch>.
 
-  package MybjectWithLog;
+=head1 DEPRECATION NOTICE
 
-  use Moose;
-
-  with Logger(config => 'FileBased');
-
-  ... 
-
-  # Later on
-  my $obj = MyObjectWithLog->new( config_filename => '/etc/project.logger.cfg');
-
-=back
-
-=head1 INTERFACE ROLES
-
-=over
-
-=item *
-
-L<Default|MooseX::LogDispatch::Role::Default> - gives you a C<logger>
-attribute which has methods to log at various levels.
-
-=item *
-
-L<Levels|MooseX::LogDispatch::Role::Levels> - will give you methods for each
-of the various log levels dirrectly on your object:
-
-  package MyLogger;
-  use Moost;
-
-  with Logger(interface => 'Levels');
-
-  ...
-
-  my $logger = MyLogger->new;
-  $logger->debug('Logger created');
-
-There will also be a C<logger> attribute.
-
-=back
+The old C<with Logger(...)> style has been depreacted in favour of just 
+using one of two roles and making the config much more flexible. To remove the
+warning notice, set the C<MX_LOGDISPATCH_NO_DEPRECATION> environment variable
+to true.
 
 =head1 BUGS AND LIMITATIONS
-
-No limitations have been reported.
 
 Please report any bugs or feature requests to
 C<bug-moosex-logdispatch@rt.cpan.org>, or through the web interface at
@@ -186,9 +225,12 @@ Ash Berlin C<< <ash@cpan.org> >>
 
 Based on work by Chris Prather  C<< <perigrin@cpan.org> >>
 
+Thanks to Brandon Black C<< <blblack@gmail.com> >> for showing me a much nicer
+way to configure things.
+
 =head1 LICENCE AND COPYRIGHT
 
-Some development sponsored by L<Takkle Inc.|http://takkle.com/>
+Some development sponsored by Takkle Inc.
 
 Copyright (c) 2007, Ash Berlin C<< <ash@cpan.org> >>. Some rights reserved.
 

@@ -1,5 +1,9 @@
 Revision history for MooseX-LogDispatch
 
+1.1000 Sun Jan 27 2008
+     - Completly reworked the way you configure the logger by incorporating
+       the work blblack did in MooseX::LazyLogDispatch.
+
 1.0001 Wed Nov 14 2007
        Fix dist to include inc/Module/Install.pm et al.
 

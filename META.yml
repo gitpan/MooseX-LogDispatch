@@ -1,11 +1,12 @@
 --- 
 abstract: A Logging Role for Moose
-author: Ash Berlin C<< <ash@cpan.org> >>
+author: 
+  - Ash Berlin C<< <ash@cpan.org> >>
 build_requires: 
   IO::Scalar: 0
   Test::More: 0
 distribution_type: module
-generated_by: Module::Install version 0.670
+generated_by: Module::Install version 0.68
 license: perl
 meta-spec: 
   url: http://module-build.sourceforge.net/META-spec-v1.3.html
@@ -18,4 +19,4 @@ no_index:
 requires: 
   Log::Dispatch::Configurator: 0
   Moose: 0
-version: 1.0001
+version: 1.1000

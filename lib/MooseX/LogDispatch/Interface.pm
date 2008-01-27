@@ -1,4 +1,5 @@
-package MooseX::LogDispatch::Interface;
+package # Hide from pause
+  MooseX::LogDispatch::Interface;
 use Moose::Role;
 
 requires qw{

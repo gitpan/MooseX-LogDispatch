@@ -6,7 +6,7 @@ use warnings;
 use IO::Scalar;
 
 use Test::More tests => 8;
-
+BEGIN{ $ENV{MX_LOGDISPATCH_NO_DEPRECATION} = 1 } 
 
 {
   package ConfigLogTest;
