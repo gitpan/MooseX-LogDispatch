@@ -1,5 +1,10 @@
 Revision history for MooseX-LogDispatch
 
+1.1001 Wed Feb 6 2008
+     - Added use_logger_singleton attribute that if true will use the existing
+       instance from Log::Dispatch::Config (if any)
+     - POD fixes
+
 1.1000 Sun Jan 27 2008
      - Completly reworked the way you configure the logger by incorporating
        the work blblack did in MooseX::LazyLogDispatch.

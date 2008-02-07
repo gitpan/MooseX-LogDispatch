@@ -1,6 +1,6 @@
 package MooseX::LogDispatch;
 
-our $VERSION = '1.1000';
+our $VERSION = '1.1001';
 
 use Moose::Role;
 use Log::Dispatch::Config;
@@ -63,9 +63,19 @@ has logger => (
     lazy_build => 1,
 );
 
+has use_logger_singleton => (
+    isa => "Bool",
+    is  => "rw",
+    default => 0,
+);
+
 sub _build_logger {
     my $self = shift;
-    Log::Dispatch::Config->configure( $self->_build_configurator );
+
+    unless ( Log::Dispatch::Config->__instance and $self->use_logger_singleton ) {
+        Log::Dispatch::Config->configure( $self->_build_configurator );
+    }
+
     return Log::Dispatch::Config->instance;
 }
 
@@ -177,27 +187,38 @@ has methods for each of the log levels, such as C<debug> or C<error>.
 
 =head2 log_dispatch_conf
 
-This is an optional attribute you can give to your class.  If you
-define it as a hashref value, that will be interpreted in the style
-of the configuration hashrefs documented in L<Log::Dispatch::Config>
-documents when they show examples of using 
-L<Log::Dispatch::Configurator/PLUGGABLE CONFIGURATOR> for pluggable 
-configuration.
+This is an optional attribute you can give to your class.  If you define it as
+a hashref value, that will be interpreted in the style of the configuration
+hashrefs documented in L<Log::Dispatch::Config> documents where they show
+examples of using a
+L<PLUGGABLE CONFIGURATOR|Log::Dispatch::Configurator/PLUGGABLE CONFIGURATOR> 
+for pluggable configuration.
 
 You can also gain greater flexibility by defining your own complete
 L<Log::Dispatch::Configurator> subclass and having your C<log_dispatch_config>
 attribute be an instance of this class.
 
-If this attribute has a value of a string, it will be taken to by the path
-to a config file for L<Log::Dispatch::Configurator::AppConfig>.
+If this attribute has a value of a string, it will be taken to by the path to
+a config file for L<Log::Dispatch::Configurator::AppConfig>.
 
-By lazy-loading either one (C<lazy => 1>), you can have the configuration
-determined at runtime.  This is nice if you want to change your log
-format and/or destination at runtime based on things like
+By lazy-loading this attribute (C<< lazy => 1 >>), you can have the
+configuration determined at runtime.  This is nice if you want to change your
+log format and/or destination at runtime based on things like
 L<MooseX::Getopt> / L<MooseX::Daemonize> parameters.
 
 If you don't provide this attribute, we'll default to sending everything to
 the screen in a reasonable debugging format.
+
+=head2 use_logger_singleton
+
+If this attribute has a true value, and L<Log::Dispatch::Config> has a
+configured log instance, this will be used in preference to anything set via
+C<log_dispatch_config>.
+
+The main use for this attribute is when you want to use this module in another
+library module - i.e. the consumer of this role is not the end user. Setting
+this attribute to true makes it much easier for the end user to configure 
+logging.
 
 =head1 SEE ALSO
 
