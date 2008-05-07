@@ -1,6 +1,6 @@
 package MooseX::LogDispatch;
 
-our $VERSION = '1.1001';
+our $VERSION = '1.1002';
 
 use Moose::Role;
 use Log::Dispatch::Config;
@@ -11,7 +11,7 @@ sub import {
 
     return if $pkg eq 'main';
 
-    ( $pkg->can('meta') && $pkg->meta->isa('Moose::Meta::Class') )
+    ( $pkg->can('meta') && ($pkg->meta->isa('Moose::Meta::Class')||$pkg->meta->isa('Moose::Meta::Role')) )
       || confess "This package can only be used in Moose based classes";
 
     $pkg->meta->alias_method(

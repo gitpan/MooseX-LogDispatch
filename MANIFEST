@@ -1,10 +1,8 @@
-Build.PL
 Changes
 inc/Module/AutoInstall.pm
 inc/Module/Install.pm
 inc/Module/Install/AutoInstall.pm
 inc/Module/Install/Base.pm
-inc/Module/Install/Build.pm
 inc/Module/Install/Can.pm
 inc/Module/Install/Fetch.pm
 inc/Module/Install/Include.pm
@@ -24,5 +22,6 @@ README
 t/00.load.t
 t/01basic.t
 t/02hash-config.t
+t/03user-config.t
 t/pod.t
 t/test.cfg
