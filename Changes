@@ -1,5 +1,8 @@
 Revision history for MooseX-LogDispatch
 
+1.1003 Wed Sept 3 2008
+     - fix Levels not returning true
+
 1.1002 Wed May 7 2008
      - allowing packaged to be used in Moose::Meta::Role (jgoulah) 
 

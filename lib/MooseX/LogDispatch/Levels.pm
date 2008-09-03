@@ -28,7 +28,7 @@ sub alert { shift->_handle_log('alert',@_) }
 sub emergency { shift->_handle_log('emergency',@_) }
 
 no Moose::Role;
-
+1; # need the magic smoke
 __END__
 
 =head1 NAME

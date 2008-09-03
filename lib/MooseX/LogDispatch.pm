@@ -1,6 +1,6 @@
 package MooseX::LogDispatch;
 
-our $VERSION = '1.1002';
+our $VERSION = '1.1003';
 
 use Moose::Role;
 use Log::Dispatch::Config;
@@ -219,6 +219,10 @@ The main use for this attribute is when you want to use this module in another
 library module - i.e. the consumer of this role is not the end user. Setting
 this attribute to true makes it much easier for the end user to configure 
 logging.
+
+Note: If you are using a class consuming this one as a role, and plan on 
+reinstantiating that class, its probably a good idea to set this to 1 to avoid
+errors.
 
 =head1 SEE ALSO
 
