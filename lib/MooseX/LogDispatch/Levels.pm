@@ -8,8 +8,18 @@ use MooseX::LogDispatch::Interface;
 with 'MooseX::LogDispatch';
 #has '+logger' => ( handles => 'MooseX::LogDispatch::Interface' );
 #
-# but it doesn't work for some reason.
-#
+# but it doesn't work because roles don't handle +attr
+
+# nor do they handle 'extends' which fucks up the OTHER approach
+
+# the dirty trick of has _logger => (
+#    default => sub { shift->logger }
+#    handles => ....
+# )
+# also doesn't work because you can't massage the CallerDepth!
+
+# We could probably do this in some really sick way using autobox
+# and ->curry, but life's too short.
 
 sub _handle_log {
   my ($self, $level, @args) = @_;
@@ -23,7 +33,7 @@ sub info { shift->_handle_log('info',@_) }
 sub notice { shift->_handle_log('notice',@_) }
 sub warning { shift->_handle_log('warning',@_) }
 sub error { shift->_handle_log('error',@_) }
-sub critical { shift->logger('critical',@_) }
+sub critical { shift->_handle_log('critical',@_) }
 sub alert { shift->_handle_log('alert',@_) }
 sub emergency { shift->_handle_log('emergency',@_) }
 

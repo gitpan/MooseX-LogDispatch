@@ -5,6 +5,7 @@ all_from 'lib/MooseX/LogDispatch.pm';
 
 build_requires 'IO::Scalar';
 build_requires 'Test::More';
+build_requires 'Test::Exception';
 
 requires 'Moose';
 requires 'Log::Dispatch::Configurator';

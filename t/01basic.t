@@ -5,26 +5,35 @@ use warnings;
 
 use IO::Scalar;
 
-use Test::More tests => 8;
-BEGIN{ $ENV{MX_LOGDISPATCH_NO_DEPRECATION} = 1 } 
+use Test::More tests => 9;
+use Test::Exception;
 
-{
-  package ConfigLogTest;
-
-  use Moose;
-  use MooseX::LogDispatch;
-
-  with Logger(config => 'FileBased');
-}
-
-{
-  package HardwiredLogTest;
+dies_ok {
+  package DeprecatedTest;
 
   use Moose;
   use MooseX::LogDispatch;
 
   with Logger();
+} "Use of Logger() dies, now deprecated.";
 
+{
+  package ConfigLogTest;
+
+  use Moose;
+  with qw/MooseX::LogDispatch/;
+  has config_filename => (
+      is => 'ro',
+      lazy => 1,
+      default => '/path/to/my/logfile',
+  );
+} 
+
+{
+  package HardwiredLogTest;
+
+  use Moose;
+  with qw(MooseX::LogDispatch);
 }
 
 sub test_logger {
@@ -41,7 +50,7 @@ sub test_logger {
   );
 
   isa_ok($logger->logger, 'Log::Dispatch');
-  is($logger->can('error'), undef, "Object not polouted");
+  is($logger->can('error'), undef, "Object not polluted");
 
   tie *STDERR, 'IO::Scalar', \my $err;
   local $SIG{__DIE__} = sub { untie *STDERR; die @_ };
@@ -50,8 +59,8 @@ sub test_logger {
   untie *STDERR;
 
   is($err, <<'EOF', "Got correct errors to stderr");
-[info] foo at t/01basic.t line 34
-[error] Gah! at t/01basic.t line 35
+[info] foo at t/01basic.t line 43
+[error] Gah! at t/01basic.t line 44
 EOF
 
 }
@@ -60,7 +69,7 @@ EOF
   my $logger = new HardwiredLogTest;
   
   isa_ok($logger->logger, 'Log::Dispatch');
-  is($logger->can('error'), undef, "Object not polouted");
+  is($logger->can('error'), undef, "Object not polluted");
 
   tie *STDERR, 'IO::Scalar', \my $err;
   local $SIG{__DIE__} = sub { untie *STDERR; die @_ };
@@ -72,9 +81,9 @@ EOF
   $err =~ s{^\[\w+ \w+\s+\d{1,2}\s+\d\d:\d\d:\d\d \d{4}\] }{}gm;
 
   is($err, <<'EOF', "Got correct errors to stderr");
-[debug] foo at t/01basic.t line 33
-[info] foo at t/01basic.t line 34
-[error] Gah! at t/01basic.t line 35
+[debug] foo at t/01basic.t line 42
+[info] foo at t/01basic.t line 43
+[error] Gah! at t/01basic.t line 44
 EOF
 
 }
@@ -83,12 +92,7 @@ EOF
   package LevelsLogTest;
 
   use Moose;
-  use MooseX::LogDispatch;
-
-  with Logger(
-    interface => 'Levels'
-  );
-
+  with qw/MooseX::LogDispatch::Levels/;
 }
 
 {
@@ -105,9 +109,9 @@ EOF
   $err =~ s{^\[\w+ \w+\s+\d{1,2}\s+\d\d:\d\d:\d\d \d{4}\] }{}gm;
 
   is($err, <<'EOF', "Got correct errors to stderr");
-[debug] foo at t/01basic.t line 33
-[info] foo at t/01basic.t line 34
-[error] Gah! at t/01basic.t line 35
+[debug] foo at t/01basic.t line 42
+[info] foo at t/01basic.t line 43
+[error] Gah! at t/01basic.t line 44
 EOF
 
 }

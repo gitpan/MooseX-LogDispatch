@@ -1,49 +1,18 @@
 package MooseX::LogDispatch;
 
-our $VERSION = '1.1003';
+use 5.008001;
+
+our $VERSION = '1.2000';
 
 use Moose::Role;
 use Log::Dispatch::Config;
 use MooseX::LogDispatch::ConfigMaker;
+use Moose::Exporter;
+use MooseX::LogDispatch::Logger;
 
-sub import {
-    my $pkg = caller();
-
-    return if $pkg eq 'main';
-
-    ( $pkg->can('meta') && ($pkg->meta->isa('Moose::Meta::Class')||$pkg->meta->isa('Moose::Meta::Role')) )
-      || confess "This package can only be used in Moose based classes";
-
-    $pkg->meta->alias_method(
-        'Logger' => sub {
-            my %params = @_;
-            Carp::carp("with Logger() snytax is deprecated and will be removed in a future release. See MooseX::LogDispatch POD for details")
-              unless $ENV{MX_LOGDISPATCH_NO_DEPRECATION};
-
-            # This is a hack, it should really create an anonymous Role
-            # that has exactly the Logger attribute we need, but
-            # it's 2am and I'm not ready to figure that out yet
-            # -- perigrin
-
-            my $interface = 'MooseX::LogDispatch';
-            $interface .=
-              exists $params{'interface'}
-              ? '::' . ucfirst( $params{'interface'} )
-              : '';
-
-            my @roles = $interface;
-
-            push @roles, 'MooseX::LogDispatch::Compat::FileBased' if ( ($params{config} || '') eq 'FileBased' );
-
-            Class::MOP::load_class($_)
-              || die "Could not load role (" . $_ . ") for package ($pkg)"
-              foreach @roles;
-
-            return @roles;
-        }
-    );
-
-}
+Moose::Exporter->setup_import_methods(
+    as_is => [ \&MooseX::LogDispatch::Logger::Logger ]
+);
 
 use Moose::Util::TypeConstraints;
 
@@ -231,10 +200,9 @@ L<Log::Dispatch::Config>, L<Log::Dispatch>.
 
 =head1 DEPRECATION NOTICE
 
-The old C<with Logger(...)> style has been depreacted in favour of just 
-using one of two roles and making the config much more flexible. To remove the
-warning notice, set the C<MX_LOGDISPATCH_NO_DEPRECATION> environment variable
-to true.
+The old C<with Logger(...)> style has been deprecated in favour of just 
+using one of two roles and making the config much more flexible. As of 
+version 1.2000 of this module, attempting to use it will make your code die.
 
 =head1 BUGS AND LIMITATIONS
 
@@ -247,6 +215,7 @@ Or come bother us in C<#moose> on C<irc.perl.org>.
 =head1 AUTHOR
 
 Ash Berlin C<< <ash@cpan.org> >>
+v1.2000 fixes by Mike Whitaker C<< <penfold@cpan.org> >>
 
 Based on work by Chris Prather  C<< <perigrin@cpan.org> >>
 

@@ -4,6 +4,7 @@ author:
   - 'Ash Berlin C<< <ash@cpan.org> >>'
 build_requires:
   IO::Scalar: 0
+  Test::Exception: 0
   Test::More: 0
 distribution_type: module
 generated_by: 'Module::Install version 0.72'
@@ -19,4 +20,5 @@ no_index:
 requires:
   Log::Dispatch::Configurator: 0
   Moose: 0
-version: 1.1003
+  perl: 5.8.1
+version: 1.2000

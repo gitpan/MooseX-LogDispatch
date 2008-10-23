@@ -1,5 +1,12 @@
 Revision history for MooseX-LogDispatch
 
+1.2000 Thu Oct 23 2008
+     - with Logger() syntax now removed after deprecation cycle 
+       Logger() now die()'s (penfold)
+	 - t/01basic.t rewritten to role-based syntax (penfold)
+	 - several attempts made at a less ugly ::Levels implementation, 
+	   copious comments added as to WHY it's the way it is (penfold)
+
 1.1003 Wed Sept 3 2008
      - fix Levels not returning true
 
