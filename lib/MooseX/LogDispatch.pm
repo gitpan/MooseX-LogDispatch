@@ -2,7 +2,7 @@ package MooseX::LogDispatch;
 
 use 5.008001;
 
-our $VERSION = '1.2000';
+our $VERSION = '1.2002';
 
 use Moose::Role;
 use Log::Dispatch::Config;
@@ -27,7 +27,7 @@ coerce 'LogDispatchConfigurator'
 
 
 has logger => (
-    isa      => 'Log::Dispatch::Config',
+    isa      => 'Log::Dispatch',
     is       => 'rw',
     lazy_build => 1,
 );
@@ -83,9 +83,9 @@ This document describes MooseX::LogDispatch version 1.1000
 
  package MyApp;
  use Moose;
- with MooseX::LogDispatch;
+ with 'MooseX::LogDispatch';
  # or
- # with MooseX::LogDispatch::Levels
+ # with 'MooseX::LogDispatch::Levels'
     
  # This is optional. Will log to screen if not provided
  has log_dispatch_conf => (

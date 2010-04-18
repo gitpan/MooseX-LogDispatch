@@ -1,5 +1,11 @@
 Revision history for MooseX-LogDispatch
 
+1.2002 Sun Apr 18 2010
+     - quote role names in synopsis
+
+1.2001 Thu Oct 23 2008
+     - fix some egregious typos in MooseX::LogDispatch::Levels docs (penfold)
+
 1.2000 Thu Oct 23 2008
      - with Logger() syntax now removed after deprecation cycle 
        Logger() now die()'s (penfold)

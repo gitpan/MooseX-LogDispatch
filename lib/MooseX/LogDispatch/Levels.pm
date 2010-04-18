@@ -43,7 +43,7 @@ __END__
 
 =head1 NAME
 
-MooseX::LgoDispatch::Levels
+MooseX::LogDispatch::Levels
 
 =head1 SYNOPSIS
 
@@ -51,7 +51,7 @@ MooseX::LgoDispatch::Levels
  use Moose;
  with 'MooseX::LogDispatch::Levels';
 
- # Optional confuration attribute would go here.
+ # Optional configuration attribute would go here.
 
  # Elsewhere...
 
